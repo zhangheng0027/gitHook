@@ -3,9 +3,9 @@ package com.zh.commit;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,31 +16,32 @@ public class PostCommit {
 
     private PostCommit() {}
 
-    public PostCommit(String[] args) throws CmdLineException {
+    public PostCommit(String[] args) throws Exception {
         final PostCommitOption pco = new PostCommitOption();
         final CmdLineParser parser = new CmdLineParser(pco);
         parser.parseArgument(args);
 
+
         if ("master".equals(pco.getBranch()) || "test".equals(pco.getBranch())
             || "regression".equals(pco.getBranch()) || "production".equals(pco.getBranch())) {
-            System.out.println("非开发分支, 不进行日志写入");
-            return;
+            exit("非开发分支，不进行日志写入", pco);
         }
 
+        File ignore = new File("ignoreBranch.txt");
+        if (ignore.exists()) {
+            BufferedReader br = new BufferedReader(new FileReader(ignore));
+            String[] brantchs = br.readLine().split(" ");
+            for (String b : brantchs)
+                if (pco.getBranch().equals(b)) {
+                    exit("非开发分支，不进行日志写入",pco);
+                }
 
+        }
+        File f = generateLogFile(pco);
+        BufferedWriter bw = new BufferedWriter(new FileWriter(f, true));
+        bw.write(displayLog(pco).toString());
     }
 
-    public static void main(String[] args) throws CmdLineException, IOException {
-        String s = "list_20220225_13726_hzhang.txt";
-
-        PostCommitOption p = new PostCommitOption();
-        p.setLogFileName("d:/crms-0225/list_20220225_13726_hzhang.txt");
-        p.setBranch("dev-20220225");
-        p.setMsg("dev-20220225 qc 15001 其他事项");
-        System.out.println(s.split("_")[3]);
-        File f = new PostCommit().generateLogFile(p);
-        System.out.println(f.getPath());
-    }
 
 
 
@@ -104,20 +105,25 @@ public class PostCommit {
     }
 
     private void exit(PostCommitOption p) {
-        System.out.println("复制失败, 请主动将以下内容复制到相应文件");
-        displayLog(p);
+        exit("复制失败, 请主动将以下内容复制到相应文件", p);
+    }
+
+    private void exit(String ss, PostCommitOption p) {
+        System.out.println(ss);
+        System.out.println(displayLog(p));
         System.exit(0);
     }
 
-    private void displayLog(PostCommitOption p) {
-        System.out.println("版本: " + p.getMd5());
-        System.out.println("作者: " + p.getAuthor() + " <" + p.getMail() + ">");
-        System.out.println("日期: " + p.getDate());
-        System.out.println("信息:");
-        System.out.println(p.getMsg());
-        System.out.println();
-        System.out.println("----");
-        System.out.println(handleDiffFileName(p.getFileName()));
+    private StringBuffer displayLog(PostCommitOption p) {
+        StringBuffer sb = new StringBuffer(256);
+        sb.append("\n版本: " + p.getMd5());
+        sb.append("\n作者: " + p.getAuthor() + " <" + p.getMail() + ">");
+        sb.append("\n日期: " + p.getDate());
+        sb.append("\n信息:");
+        sb.append(p.getMsg());
+        sb.append("\n----\n");
+        sb.append(handleDiffFileName(p.getFileName()));
+        return sb;
     }
 
     private StringBuffer handleDiffFileName(String files) {

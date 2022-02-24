@@ -4,12 +4,13 @@ package com.zh;
 import com.zh.commit.PostCommit;
 import org.kohsuke.args4j.CmdLineException;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class Main {
 
 
-    public static void main(String[] args) throws CmdLineException {
+    public static void main(String[] args) throws Exception {
         if (args.length < 1)
             return;
         System.out.println(args.length);

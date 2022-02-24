@@ -12,4 +12,4 @@ op=$(git log --pretty=format:'-md5 %H -author %an -mail %ae' -1)
 fileName=$(git log --name-status --pretty=format:''  -1)
 
 
-java -jar gitHook.jar --pc -branch "$branch"  -msg "$msg" -date "$date" $op  -logFileName "$logFileName" -fileName "$fileName"
+java -jar .get/hooks/gitHook.jar --pc -branch "$branch"  -msg "$msg" -date "$date" $op  -logFileName "$logFileName" -fileName "$fileName"
