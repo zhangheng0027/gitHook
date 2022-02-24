@@ -4,6 +4,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,6 +13,8 @@ import java.util.regex.Pattern;
  * commit 后执行
  */
 public class PostCommit {
+
+    private PostCommit() {}
 
     public PostCommit(String[] args) throws CmdLineException {
         final PostCommitOption pco = new PostCommitOption();
@@ -27,19 +30,21 @@ public class PostCommit {
 
     }
 
-    public static void main(String[] args) {
-        String s = "crms-0312";
-        Pattern p = Pattern.compile("\\d+");
-        Matcher m = p.matcher(s);
-        m.find();
-        String ss = m.group();
-        System.out.println(ss);
+    public static void main(String[] args) throws CmdLineException, IOException {
+        String s = "list_20220225_13726_hzhang.txt";
 
+        PostCommitOption p = new PostCommitOption();
+        p.setLogFileName("d:/crms-0225/list_20220225_13726_hzhang.txt");
+        p.setBranch("dev-20220225");
+        p.setMsg("dev-20220225 qc 15001 其他事项");
+        System.out.println(s.split("_")[3]);
+        File f = new PostCommit().generateLogFile(p);
+        System.out.println(f.getPath());
     }
 
 
 
-    private File generateLogFile(PostCommitOption p) {
+    private File generateLogFile(PostCommitOption p) throws IOException {
         String logf = p.getLogFileName();
         if (Objects.isNull(logf) || "".equals(logf)) {
             System.out.println("未设置日志存放位置,  .get/hook/post-commit 文件的 logFileName 属性");
@@ -47,19 +52,55 @@ public class PostCommit {
         }
         File file = new File(logf);
         File pathFile = file.getParentFile();
-        String branch = p.getBranch();
         String pfn = pathFile.getName();
+        // 解析文件夹
+        String path = pathFile.getPath();
         Pattern pa = Pattern.compile("\\d+");
         Matcher m = pa.matcher(pfn);
         m.find();
         String ss = m.group();
         if (ss.length() == 8) {
-
+            // 年月日
+            // dev-20220225
+            String b = p.getBranch().substring(4, 12);
+            if (ss.equals(b)) {
+                path = pathFile.getParent();
+            } else {
+                path = path + "/" + pfn.replaceAll(ss, b);
+            }
         } else if(ss.length() == 4) {
-
+            // 月日
+            // dev-20220225
+            String b = p.getBranch().substring(8, 12);
+            if (ss.equals(b)) {
+                path = pathFile.getPath();
+            } else {
+                path = path + "/" + pfn.replaceAll(ss, b);
+            }
         }
-        file.getName();
-        return null;
+
+//        list_20220225_13726_hzhang.txt
+        path = path + "/list_" + p.getBranch().substring(4, 12) + "_";
+
+        // dev-20220225 qc 13726....
+        // 解析qc号
+        Pattern p1 = Pattern.compile("(?<=[qQ][cC]) *\\d+");
+        Matcher m1 = p1.matcher(p.getMsg());
+        m1.find();
+        path = path + m1.group().trim() + "_" + file.getName().split("_")[3];
+        File nf = new File(path);
+        if (nf.exists())
+            return nf;
+
+        if(!nf.getParentFile().exists()) {
+            try {
+                nf.getParentFile().mkdirs();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        nf.createNewFile();
+        return nf;
     }
 
     private void exit(PostCommitOption p) {
