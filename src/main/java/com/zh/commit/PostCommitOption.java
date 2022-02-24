@@ -25,6 +25,9 @@ public class PostCommitOption {
     @Option(name="-fileName", required=true)
     private String fileName;
 
+    @Option(name="-logFileName", required=true)
+    private String logFileName;
+
     public String getBranch() {
         return branch;
     }
@@ -79,5 +82,13 @@ public class PostCommitOption {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getLogFileName() {
+        return logFileName;
+    }
+
+    public void setLogFileName(String logFileName) {
+        this.logFileName = logFileName;
     }
 }

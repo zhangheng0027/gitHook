@@ -1,12 +1,15 @@
 #!/bin/sh
 
+# 完整的绝对路径
+logFileName='d:/crms-0225/list_20220225_13726_hzhang.txt'
+
 # 将该文件放到 hook 下
 branch=$(git rev-parse --abbrev-ref HEAD)
 msg=$(git log --pretty=format:'%s' -1)
 date=$(git log --pretty=format:'ad' --date=format:'%Y-%m-%d %H:%M:%S' head -1)
 
 op=$(git log --pretty=format:'-md5 %H -author %an -mail %ae' -1)
-file=$(git log --name-status --pretty=format:''  -1)
+fileName=$(git log --name-status --pretty=format:''  -1)
 
 
-java -jar gitHook.jar --pc -branch "$branch"  -msg "$msg" -date "$date" $op -fileName "$file"
+java -jar gitHook.jar --pc -branch "$branch"  -msg "$msg" -date "$date" $op  -logFileName "$logFileName" -fileName "$fileName"
