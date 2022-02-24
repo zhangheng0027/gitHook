@@ -5,6 +5,8 @@ import org.kohsuke.args4j.CmdLineParser;
 
 import java.io.File;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * commit 后执行
@@ -25,18 +27,45 @@ public class PostCommit {
 
     }
 
+    public static void main(String[] args) {
+        String s = "crms-0312";
+        Pattern p = Pattern.compile("\\d+");
+        Matcher m = p.matcher(s);
+        m.find();
+        String ss = m.group();
+        System.out.println(ss);
+
+    }
+
+
+
     private File generateLogFile(PostCommitOption p) {
         String logf = p.getLogFileName();
         if (Objects.isNull(logf) || "".equals(logf)) {
             System.out.println("未设置日志存放位置,  .get/hook/post-commit 文件的 logFileName 属性");
-            System.exit(0);
+            exit(p);
         }
         File file = new File(logf);
         File pathFile = file.getParentFile();
+        String branch = p.getBranch();
+        String pfn = pathFile.getName();
+        Pattern pa = Pattern.compile("\\d+");
+        Matcher m = pa.matcher(pfn);
+        m.find();
+        String ss = m.group();
+        if (ss.length() == 8) {
 
+        } else if(ss.length() == 4) {
 
+        }
         file.getName();
         return null;
+    }
+
+    private void exit(PostCommitOption p) {
+        System.out.println("复制失败, 请主动将以下内容复制到相应文件");
+        displayLog(p);
+        System.exit(0);
     }
 
     private void displayLog(PostCommitOption p) {
@@ -47,12 +76,27 @@ public class PostCommit {
         System.out.println(p.getMsg());
         System.out.println();
         System.out.println("----");
+        System.out.println(handleDiffFileName(p.getFileName()));
     }
 
     private StringBuffer handleDiffFileName(String files) {
         StringBuffer sb = new StringBuffer(files.length());
         String[] fs = files.split(" ");
-
+        for (int i = 0; i < fs.length - 1; i+=2) {
+            if ("A".equals(fs[i])) {
+                sb.append("已添加: ");
+            } else if ("D".equals(fs[i])) {
+                sb.append("已删除: ");
+            } else if ("M".equals(fs[i])) {
+                sb.append("已修改: ");
+            } else if ("R100".equals(fs[i])) {
+                sb.append("重命名: ").append(fs[i + 1])
+                        .append(" (从 ").append(fs[i + 2])
+                        .append(")\n");
+                continue;
+            }
+            sb.append(fs[i+1]).append("\n");
+        }
 
         return sb;
     }
