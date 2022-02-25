@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# 完整的绝对路径
-logFileName='d:/crms-0225/list_20220225_13726_hzhang.txt'
+# 完整的绝对路径 需要手动配置一次, 可自动识别
+logFileName='d:/信贷版本/crms-0225/list_20220225_13726_hzhang.txt'
 
 # 将该文件放到 hook 下
 branch=$(git rev-parse --abbrev-ref HEAD)

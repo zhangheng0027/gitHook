@@ -4,6 +4,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -39,12 +40,21 @@ public class PostCommit {
             File f = generateLogFile(pco);
             System.out.println(f.getPath());
             String con = displayLog(pco).toString();
-            FileWriter fw = new FileWriter(f, true);
-            BufferedWriter bw = new BufferedWriter(fw);
+//            FileWriter f = new FileWriter(f, true);
+//            FileOutputStream fw = new FileOutputStream(f, true);
+//
+//
+//            new OutputStreamWriter(fw, "UTF-8");
+//            BufferedWriter bw = new BufferedWriter(fw);
+
+            FileOutputStream fw = new FileOutputStream(f, true);
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fw, "UTF-8"));
+
             bw.write(con);
             bw.close();
             fw.close();
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             exit("日志写入失败, 请手动操作", pco);
         }
     }

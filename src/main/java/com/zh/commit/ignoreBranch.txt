@@ -1,4 +1,4 @@
 master test regression production
 
 不将提交信息复制到相应文件的分支, 默认 master test regression production
-只读第一行, 默认 master test regression production, 空格分割
+只读第一行, 空格分割.
