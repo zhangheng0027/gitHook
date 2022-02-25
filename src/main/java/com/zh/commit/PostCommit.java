@@ -22,11 +22,6 @@ public class PostCommit {
         parser.parseArgument(args);
 
 
-        if ("master".equals(pco.getBranch()) || "test".equals(pco.getBranch())
-            || "regression".equals(pco.getBranch()) || "production".equals(pco.getBranch())) {
-            exit("非开发分支，不进行日志写入", pco);
-        }
-
         File ignore = new File("ignoreBranch.txt");
         if (ignore.exists()) {
             BufferedReader br = new BufferedReader(new FileReader(ignore));
@@ -35,14 +30,32 @@ public class PostCommit {
                 if (pco.getBranch().equals(b)) {
                     exit("非开发分支，不进行日志写入",pco);
                 }
-
+        } else if ("master".equals(pco.getBranch()) || "test".equals(pco.getBranch())
+                || "regression".equals(pco.getBranch()) || "production".equals(pco.getBranch())) {
+            exit("非开发分支，不进行日志写入", pco);
         }
-        File f = generateLogFile(pco);
-        BufferedWriter bw = new BufferedWriter(new FileWriter(f, true));
-        bw.write(displayLog(pco).toString());
+
+        try {
+            File f = generateLogFile(pco);
+            System.out.println(f.getPath());
+            String con = displayLog(pco).toString();
+            FileWriter fw = new FileWriter(f, true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(con);
+            bw.close();
+            fw.close();
+        } catch (Exception e) {
+            exit("日志写入失败, 请手动操作", pco);
+        }
     }
 
-
+    public static void main(String[] args) throws IOException {
+        PostCommitOption p = new PostCommitOption();
+        p.setLogFileName("d:/信贷版本/crms-0225/list_20220225_13726_hzhang.txt");
+        p.setBranch("dev-20220318");
+        p.setMsg("dev-20220318 qc 13532 其他");
+        new PostCommit().generateLogFile(p);
+    }
 
 
     private File generateLogFile(PostCommitOption p) throws IOException {
@@ -55,7 +68,7 @@ public class PostCommit {
         File pathFile = file.getParentFile();
         String pfn = pathFile.getName();
         // 解析文件夹
-        String path = pathFile.getPath();
+        String path = pathFile.getParent();
         Pattern pa = Pattern.compile("\\d+");
         Matcher m = pa.matcher(pfn);
         m.find();
@@ -65,7 +78,7 @@ public class PostCommit {
             // dev-20220225
             String b = p.getBranch().substring(4, 12);
             if (ss.equals(b)) {
-                path = pathFile.getParent();
+                path = pathFile.getPath();
             } else {
                 path = path + "/" + pfn.replaceAll(ss, b);
             }
@@ -116,35 +129,36 @@ public class PostCommit {
 
     private StringBuffer displayLog(PostCommitOption p) {
         StringBuffer sb = new StringBuffer(256);
-        sb.append("\n版本: " + p.getMd5());
-        sb.append("\n作者: " + p.getAuthor() + " <" + p.getMail() + ">");
-        sb.append("\n日期: " + p.getDate());
-        sb.append("\n信息:");
+        sb.append("\r\n版本: " + p.getMd5());
+        sb.append("\r\n作者: " + p.getAuthor() + " <" + p.getMail() + ">");
+        sb.append("\r\n日期: " + p.getDate());
+        sb.append("\r\n信息:\r\n");
         sb.append(p.getMsg());
-        sb.append("\n----\n");
+        sb.append("\r\n----\r\n");
         sb.append(handleDiffFileName(p.getFileName()));
+        sb.append("\r\n");
         return sb;
     }
 
     private StringBuffer handleDiffFileName(String files) {
         StringBuffer sb = new StringBuffer(files.length());
-        String[] fs = files.split(" ");
-        for (int i = 0; i < fs.length - 1; i+=2) {
-            if ("A".equals(fs[i])) {
+        String[] fst = files.split("\n");
+        for (String f : fst) {
+            String[] ts = f.split("\t");
+            if ("A".equals(ts[0])) {
                 sb.append("已添加: ");
-            } else if ("D".equals(fs[i])) {
+            } else if ("D".equals(ts[0])) {
                 sb.append("已删除: ");
-            } else if ("M".equals(fs[i])) {
+            } else if ("M".equals(ts[0])) {
                 sb.append("已修改: ");
-            } else if ("R100".equals(fs[i])) {
-                sb.append("重命名: ").append(fs[i + 1])
-                        .append(" (从 ").append(fs[i + 2])
-                        .append(")\n");
+            } else if ("R100".equals(ts[0])) {
+                sb.append("重命名: ").append(ts[1])
+                        .append(" (从 ").append(ts[2])
+                        .append(")\r\n");
                 continue;
             }
-            sb.append(fs[i+1]).append("\n");
+            sb.append(ts[1]).append("\r\n");
         }
-
         return sb;
     }
 }
